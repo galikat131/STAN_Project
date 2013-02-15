@@ -1,0 +1,5 @@
+How the Capacitive Interface Is Connected
+
+wire from pin 2 to capacitor wire, also to 32 resistor
+wire from pin 4 to normal resistor that connects to another wire that goes to resistor 31
+wire with colored bits goes to ground
