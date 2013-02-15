@@ -19,7 +19,7 @@ ax.set_ylim(0, 250)
 #ax.set_xlim(0, 250)
 
 x = np.arange(0, 2*np.pi, 0.01)        # x-array
-line = ax.plot(x, np.sin(x))
+line, = ax.plot(x, np.sin(x))
 
 distances = []
 
