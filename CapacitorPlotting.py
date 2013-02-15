@@ -16,6 +16,7 @@ PORT = "/dev/ttyACM0"
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_ylim(0, 250)
+#ax.set_xlim(0, 250)
 
 x = np.arange(0, 2*np.pi, 0.01)        # x-array
 line, = ax.plot(x, np.sin(x))
@@ -46,10 +47,13 @@ def rms(arr):
                      / len(arr))
     
 def animate(i):
-    #try:
-    time, reading = ser.readline().strip().split()
+    try:
+        time, reading, reading2 = ser.readline().strip().split()
+    except ValueError:
+        pass
     #print recv.strip()
     reading = int(reading)
+    #reading2 = int(reading2)
     ser.flush()
     distance = reading_to_distance(reading)
     add_new_distance(distance)
