@@ -7,22 +7,27 @@ import matplotlib.animation as animation
 import serial
 
 
-PORT = "/dev/ttyACM0"
+PORT = "/dev/ttyACM1"
 ser = serial.Serial(PORT, 9600)
 
 def get_readings():
     return ser.readline().strip().split()
 
 def reading_to_distance(x):
-    return (0.0 if x == 0 else 1000 / math.sqrt(x))
+    if (x <= 0):
+         return 0.0
+    root = math.sqrt(x)
+    return 1000/root
 
 class Graph:
     
     def __init__(self):
-        self.verbose = True
+        self.verbose = False
         self.distances = []
         # TODO: adjust this based on the time between inputs
-        self.distances_max_len = 20
+        self.distances_max_len = 6 # 20
+        self.plot = plt.plot([])
+        plt.show(block=False)
         
     # Finds the root mean square of the distances array.
     def rms(self):
@@ -52,18 +57,27 @@ class Graph:
     def plot(self):
         # TODO: update the plot rather than repeatedly closing and opening 
         # different plots
-        xs = [i for i in range(len(self.distances))]
-#        plt.plot(xs, self.distances)
-#        plt.show()
+        #plt.clf()
+        #plt.set_ydata(numpy.append(self.plot.get_ydata(), rms(self.distances)))
+        plt.plot(self.distances)
+        #plt.plot(self.distances)
+        #plt.show()
+        plt.draw()
+        #print "Plotting"
 
 
 graph = Graph()
+graph2 = Graph()
+graph3 = Graph()
 
 while True:
     try:
-        time, reading, reading2 = get_readings()
+        time, reading, reading2, reading3 = get_readings()
         graph.add_reading(reading)
-        graph.plot()
+        graph2.add_reading(reading2)
+        graph3.add_reading(reading3)
+        print "(%d, %d, %d)" % (graph.rms(), graph2.rms(), graph3.rms())
+        #graph.plot()
     except ValueError as e:
         print "Error: ", str(e)
 #    except BaseException as e:
