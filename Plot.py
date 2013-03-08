@@ -2,16 +2,31 @@ import math
 import sys
 import random
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import serial
+from time import sleep
 
+# first = white
+# second = bottom
+# third = other
 
-PORT = "/dev/ttyACM1"
-ser = serial.Serial(PORT, 9600)
+#PORT = "/dev/ttyACM0"
+#ser = serial.Serial(PORT, 9600)
+
+class FakeData:
+
+    def __init__(self):
+        self.prev_fake_data = 500
+
+    def get(self):
+        self.prev_fake_data += random.randrange(-10, 11)
+        return self.prev_fake_data
+
+fakes = [FakeData(), FakeData(), FakeData()]
 
 def get_readings():
-    return ser.readline().strip().split()
+    global fakes
+    return [0] + map(lambda x: x.get(), fakes)
+#    return ser.readline().strip().split()
 
 def reading_to_distance(x):
     if (x <= 0):
@@ -25,9 +40,8 @@ class Graph:
         self.verbose = False
         self.distances = []
         # TODO: adjust this based on the time between inputs
-        self.distances_max_len = 6 # 20
-        self.plot = plt.plot([])
-        plt.show(block=False)
+        self.distances_max_len = 10 # 20
+        self.prev_rms = 1
         
     # Finds the root mean square of the distances array.
     def rms(self):
@@ -40,7 +54,7 @@ class Graph:
     # reading: a string representing a raw input value.
     def add_reading(self, reading):
         reading = int(reading)
-        ser.flush()
+#        ser.flush()
         distance = reading_to_distance(reading)
         self.add_distance(distance)
         if (self.verbose):
@@ -54,16 +68,12 @@ class Graph:
         if len(self.distances) > self.distances_max_len:
             self.distances.pop(0)   
 
-    def plot(self):
-        # TODO: update the plot rather than repeatedly closing and opening 
-        # different plots
-        #plt.clf()
-        #plt.set_ydata(numpy.append(self.plot.get_ydata(), rms(self.distances)))
-        plt.plot(self.distances)
-        #plt.plot(self.distances)
-        #plt.show()
-        plt.draw()
-        #print "Plotting"
+    def delta(self):
+        rms = self.rms()
+        diff = (rms - self.prev_rms) / self.prev_rms
+        self.prev_rms = rms
+        return diff
+        
 
 
 graph = Graph()
@@ -76,7 +86,9 @@ while True:
         graph.add_reading(reading)
         graph2.add_reading(reading2)
         graph3.add_reading(reading3)
-        print "(%d, %d, %d)" % (graph.rms(), graph2.rms(), graph3.rms())
+#        print "(%d, %d, %d)" % (graph.delta(), graph2.delta(), graph3.delta()
+        print "(%f, %f, %f)" % (graph.delta(), graph2.delta(), graph3.delta())
+        sleep(1)
         #graph.plot()
     except ValueError as e:
         print "Error: ", str(e)
