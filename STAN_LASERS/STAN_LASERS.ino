@@ -1,15 +1,13 @@
-boolean laser1 = false;
-boolean laser2 = false;
-int initial1;
-int initial2;
 // Only print every 20 values
 int printDelay = 0;
+int laser1, laser2;
+int initial1, initial2;
 // One laser activated
-boolean pending = false;
-int first;
 int counter = 0;
+int prevsLength = 4;
+int prevs[4] = { 0, 0, 0, 0 };
 
-void setup (){
+void setup() {
     Serial.begin(9600);
     pinMode(0, INPUT);
     pinMode(1, INPUT);
@@ -17,7 +15,7 @@ void setup (){
     initial2 = analogRead(1);
 }
 
-void loop ()
+void loop()
 {
   startRead();  
 }
@@ -27,65 +25,47 @@ int startRead() {
   laser1 = laserBlocked(analogRead(0)-initial1);
   laser2 = laserBlocked(analogRead(1)-initial2);
   crossingDirection();
-  delay (20);
+  delay(20);
   
   if (printDelay == 20) {
-    //Serial.print(analogRead(0)-initial1);
-    //Serial.print("        ");
-    //Serial.println(analogRead(1)-initial2);
+//    Serial.print(analogRead(0)-initial1);
+//    Serial.print("        ");
+//    Serial.println(analogRead(1)-initial2);
     printDelay=0;
   }
   
 }
 
 
-boolean laserBlocked(int brightness){
+boolean laserBlocked(int brightness) {
   return (brightness > 400);
 }
 
-void crossingDirection(){
-  
-  // only laser 1 blocked
-  if(laser1 && !laser2){
-    if (!pending) {
-      pending = true;
-      first = 1;
-    }
-    else if (first == 2) {
-      pending = false;
-      Serial.print("ENTERING\n");
-      counter++;
-      Serial.print(counter);
-      Serial.print(" people in the room\n");
-    }
-    //Serial.print("Laser1 Blocked \n");
+void movePrevsDown() {
+  for (int i = 0; i < prevsLength - 1; i++) {
+    prevs[i] = prevs[i+1];
   }
-  
-  // only laser 2 blocked
-  else if(laser2 && !laser1){
-    if (!pending) {
-      pending = true;
-      first = 2;
-    }
-    else if (first == 1) {
-      pending = false;
-      Serial.print("EXITING\n");
-      counter--;
-      Serial.print(counter);
-      Serial.print(" people in the room\n");
-    }
-    //Serial.print("Laser2 Blocked \n");
-  }
-  
-  // both blocked
-  else if(laser1 && laser2){
-    //Serial.print("Both Lasers Blocked \n");
-    while(laser1 && laser2) {
-      // Wait until person has entered room
-       laser1 = laserBlocked(analogRead(0)-initial1);
-       laser2 = laserBlocked(analogRead(1)-initial2);
-    }
-  }
-
-  
 }
+
+void crossingDirection() {
+  // first bit is laser1; second bit is laser2
+  int cur = laser1 | (laser2 << 1);
+  if (cur != prevs[3]) {
+    movePrevsDown();
+    prevs[3] = cur;
+    if (prevs[0] == 2 && prevs[1] == 3 && prevs[2] == 1 && prevs[3] == 0) {
+      counter++;
+      Serial.print("ENTERING: ");
+      Serial.println(counter);
+    } else if (prevs[0] == 1 && prevs[1] == 3 && prevs[2] == 2 && prevs[3] == 0) {
+      counter--;
+      Serial.print("EXITING: ");
+      Serial.println(counter);
+    }
+
+  }
+    
+//  Serial.println(cur);
+}
+
+
